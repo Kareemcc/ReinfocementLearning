@@ -24,12 +24,12 @@ Experience = namedtuple(
 
 
 class DQN(nn.Module):
-    def __init__(self, img_height, img_width):
+    def __init__(self, img_height, img_width, outputs):
         super().__init__()
 
         self.fc1 = nn.Linear(in_features=img_height*img_width*3, out_features=24)
         self.fc2 = nn.Linear(in_features=24, out_features=32)
-        self.out = nn.Linear(in_features=32, out_features=2)
+        self.out = nn.Linear(in_features=32, out_features=outputs)
 
     def forward(self, t):
         t = t.flatten(start_dim=1)
@@ -40,7 +40,7 @@ class DQN(nn.Module):
 
 # class DQN(nn.Module):
 
-#     def __init__(self, h, w, outputs):
+#     def __init__(self, h, w):
 #         super(DQN, self).__init__()
 #         self.conv1 = nn.Conv2d(3, 16, kernel_size=5, stride=2)
 #         self.bn1 = nn.BatchNorm2d(16)
@@ -115,10 +115,10 @@ class Agent():
             with torch.no_grad():
                 return policy_net(state).argmax(dim=1).to(self.device) # exploit
 
-class CartPoleEnvManager():
+class MountainCarEnvManager():
     def __init__(self, device):
         self.device = device
-        self.env = gym.make('CartPole-v0').unwrapped
+        self.env = gym.make('MountainCar-v0').unwrapped
         self.env.reset()
         self.current_screen = None
         self.done = False
@@ -164,17 +164,7 @@ class CartPoleEnvManager():
 
     def get_processed_screen(self):
         screen = self.render('rgb_array').transpose((2, 0, 1)) #PyTorch expects
-        screen = self.crop_screen(screen)
         return self.transform_screen_data(screen)
-
-    def crop_screen(self, screen):
-        screen_height = screen.shape[1]
-
-        # Strip off top and bottom (extra unneeded white space)
-        top = int(screen_height * 0.4)
-        bottom = int(screen_height * 0.8)
-        screen = screen[:, top:bottom, :]
-        return screen
 
     def transform_screen_data(self, screen):
         # Convert to float, rescale, convert to tensor
